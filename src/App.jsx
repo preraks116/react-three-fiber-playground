@@ -4,6 +4,7 @@ import { Canvas, useThree, useFrame, useLoader } from "@react-three/fiber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Physics, useBox, usePlane } from "@react-three/cannon"
 import { useTexture } from "@react-three/drei"
+import * as THREE from 'three';
 
 const usePersonControls = () => {
   const keys = {
@@ -69,6 +70,7 @@ function Box(props) {
   const position = useRef([0, 0, 0]);
   const speed = 0.05; 
   const textures = props.textures;
+  // discuss with vasco 
   const def = ({
     map: 'src/textures/tile/TactilePaving003_1K_Color.jpg',
     normalMap: 'src/textures/tile/TactilePaving003_1K_NormalDX.jpg',
@@ -128,7 +130,7 @@ function Plane(props) {
         <mesh {...props} ref={ref} >
           <planeBufferGeometry attach='geometry' args={props.dimension} />
           {/* <meshStandardMaterial attach='material' color={props.color} side={THREE.DoubleSide} /> */}
-          <meshStandardMaterial {...props2} />
+          <meshStandardMaterial {...props2} side={THREE.DoubleSide} />
         </mesh>
     </group>
   )
@@ -138,7 +140,7 @@ function App() {
   return (
     <>
     <Canvas
-      camera={{ position: [0,9,20], fov: 90 }} 
+      camera={{ position: [0,9,20], fov: 70 }} 
     >
       <CameraController />
       <ambientLight />
@@ -171,7 +173,7 @@ function App() {
         />
 
         <Box 
-          dimension={[0.1, 5, 5]} 
+          dimension={[0.3, 5, 5]} 
           position={[5, 2.5, 0]} 
           color="orange"
           type="Static" 
@@ -186,7 +188,7 @@ function App() {
         />
 
         <Box 
-          dimension={[5, 5, 0.1]} 
+          dimension={[5, 5, 0.3]} 
           position={[2.5, 2.5, -2.5]} 
           color="orange"
           type="Static" 
