@@ -1,11 +1,9 @@
-// import { useState } from 'react'
-// import logo from './logo.svg'
 import './App.css'
 import React, { useEffect, useRef, useState } from "react";
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Canvas, useThree, useFrame, useLoader } from "@react-three/fiber";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Physics, useBox, usePlane } from "@react-three/cannon"
-import * as THREE from "three";
+import { useTexture } from "@react-three/drei"
 
 const usePersonControls = () => {
   const keys = {
@@ -60,11 +58,24 @@ const CameraController = () => {
 };
 
 function Box(props) {
-  const mesh = useBox(() => ({ mass: 1, ...props }))
+  const mesh = useBox(() => ({ 
+    mass: 1, 
+    position: props.position, 
+    args: props.dimension, 
+    type: props.type
+  }))
   const [ref, api] = mesh;
   const controls = usePersonControls();
   const position = useRef([0, 0, 0]);
-  const speed = 0.05;
+  const speed = 0.05; 
+  const textures = props.textures;
+  const def = ({
+    map: 'src/textures/tile/TactilePaving003_1K_Color.jpg',
+    normalMap: 'src/textures/tile/TactilePaving003_1K_NormalDX.jpg',
+    roughnessMap: 'src/textures/tile/TactilePaving003_1K_Roughness.jpg',
+  })
+  const props2 = textures ? useTexture(textures) : useTexture(def);
+
   // gets current position of the object 
   useEffect(() => {
     const unsubscribe = api.position.subscribe((v) => (position.current = v))
@@ -72,41 +83,52 @@ function Box(props) {
   }, [])
 
   useFrame(() => {
-    // add key controls
-    if (controls.forward) {
-      // api.velocity.set(0, 0, -1);   
-      api.position.set(position.current[0], position.current[1], position.current[2] - speed);
-    }
-    if (controls.backward) {
-      // api.velocity.set(0, 0, 1);
-      api.position.set(position.current[0], position.current[1], position.current[2] + speed);
-    }
-    if (controls.left) {
-      // api.velocity.set(-1, 0, 0);
-      api.position.set(position.current[0] - speed, position.current[1], position.current[2]);
-    }
-    if (controls.right) {
-      // api.velocity.set(1, 0, 0);
-      api.position.set(position.current[0] + speed, position.current[1], position.current[2]);
+    // key controls
+    // todo: calculating forward vector
+    if(props.type == "person") {
+      if (controls.forward) {
+        // api.velocity.set(0, 0, -1); 
+        api.position.set(position.current[0], position.current[1], position.current[2] - speed);
+      }
+      if (controls.backward) {
+        // api.velocity.set(0, 0, 1);
+        api.position.set(position.current[0], position.current[1], position.current[2] + speed);
+      }
+      if (controls.left) {
+        // api.velocity.set(-1, 0, 0);
+        api.position.set(position.current[0] - speed, position.current[1], position.current[2]);
+      }
+      if (controls.right) {
+        // api.velocity.set(1, 0, 0);
+        api.position.set(position.current[0] + speed, position.current[1], position.current[2]);
+      }
     }
   });
   
   return (
     <mesh {...props} ref={ref}>
-      <boxGeometry attach="geometry" args={[1, 1, 1]} />
-      <meshPhongMaterial attach="material" color="hotpink"/>
+      <boxGeometry attach="geometry" args={props.dimension} />
+      <meshStandardMaterial {...props2} />
     </mesh>
   )
 } 
 
 function Plane(props) {
-  const [ref] = usePlane(() => ({ ...props }))
+  const [ref] = usePlane(() => ({ position: props.position, rotation: props.rotation, dimensions: props.dimension }))
+  const textures = props.textures;
+  const def = ({
+    map: 'src/textures/tile/TactilePaving003_1K_Color.jpg',
+    normalMap: 'src/textures/tile/TactilePaving003_1K_NormalDX.jpg',
+    roughnessMap: 'src/textures/tile/TactilePaving003_1K_Roughness.jpg',
+  })
+  const props2 = textures ? useTexture(textures) : useTexture(def);
+
   return (
     <group>
         <mesh {...props} ref={ref} >
           <planeBufferGeometry attach='geometry' args={props.dimension} />
-          <meshStandardMaterial attach='material' color={props.color} side={THREE.DoubleSide} />
-          {/* <shadowMaterial attach='material' /> */}
+          {/* <meshStandardMaterial attach='material' color={props.color} side={THREE.DoubleSide} /> */}
+          <meshStandardMaterial {...props2} />
         </mesh>
     </group>
   )
@@ -116,7 +138,7 @@ function App() {
   return (
     <>
     <Canvas
-      camera={{ position: [0,9,20], fov: 50 }} 
+      camera={{ position: [0,9,20], fov: 90 }} 
     >
       <CameraController />
       <ambientLight />
@@ -132,39 +154,76 @@ function App() {
         shadow-camera-top={10}
         shadow-camera-bottom={-10}
       />
+
       <Physics>
+
         <Plane
         rotation={[-Math.PI / 2, 0, 0]} 
         position={[0, 0, 0]} 
-        dimension={[10, 10]}  
-        color={"yellow"} 
-        />
-
-        <Plane
-          rotation={[0, -Math.PI / 2, 0]} 
-          position={[5, 2, 0]} 
-          dimension={[10, 4]}  
-          color={"orange"} 
-        />
-
-        <Plane
-          rotation={[0, Math.PI / 2, 0]} 
-          position={[-5, 2, 0]} 
-          dimension={[10, 4]}  
-          color={"orange"} 
-        />
-
-        <Plane
-          rotation={[0, 0, Math.PI / 2]} 
-          position={[0, 2, -5]} 
-          dimension={[4, 10]}  
-          color={"orange"} 
+        dimension={[50, 50]}  
+        textures={
+          {
+            map: 'src/textures/road/Asphalt015_2K_Color.jpg',
+            normalMap: 'src/textures/road/Asphalt015_2K_NormalDX.jpg',
+            roughnessMap: 'src/textures/road/Asphalt015_2K_Roughness.jpg',
+          }
+        }
         />
 
         <Box 
-          // dimension={[1, 2, 1]} 
-          position={[0, 0.5, 0]} 
-          // color="hotpink" 
+          dimension={[0.1, 5, 5]} 
+          position={[5, 2.5, 0]} 
+          color="orange"
+          type="Static" 
+          textures={
+            {
+              map: 'src/textures/brick/PavingStones092_1K_Color.jpg',
+              normalMap: 'src/textures/brick/PavingStones092_1K_NormalDX.jpg',
+              roughnessMap: 'src/textures/brick/PavingStones092_1K_Roughness.jpg',
+              aoMap: 'src/textures/brick/PavingStones092_1K_AmbientOcclusion.jpg',
+            }
+          }
+        />
+
+        <Box 
+          dimension={[5, 5, 0.1]} 
+          position={[2.5, 2.5, -2.5]} 
+          color="orange"
+          type="Static" 
+          textures={
+            {
+              map: 'src/textures/brick/PavingStones092_1K_Color.jpg',
+              normalMap: 'src/textures/brick/PavingStones092_1K_NormalDX.jpg',
+              roughnessMap: 'src/textures/brick/PavingStones092_1K_Roughness.jpg',
+              aoMap: 'src/textures/brick/PavingStones092_1K_AmbientOcclusion.jpg',
+            }
+          }
+        />
+
+        <Box 
+          dimension={[0.5, 0.5, 0.5]} 
+          position={[10, 0.25, 0]} 
+          type="Static"
+          textures={
+            {
+              map: 'src/textures/wood/WoodFloor041_1K_Color.jpg',
+              normalMap: 'src/textures/wood/WoodFloor041_1K_NormalDX.jpg',
+              roughnessMap: 'src/textures/wood/WoodFloor041_1K_Roughness.jpg',
+              aoMap: 'src/textures/wood/WoodFloor041_1K_AmbientOcclusion.jpg',
+            }
+          }
+        />
+
+        <Box 
+          dimension={[1, 1, 1]} 
+          position={[0, 1.5, 0]} 
+          type="person"
+        />
+
+        <Box 
+          dimension={[1, 2, 1]} 
+          position={[-5, 1, 0]} 
+          type="dynamic"
         />
       </Physics>
     </Canvas>
