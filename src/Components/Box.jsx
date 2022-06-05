@@ -4,7 +4,6 @@ import usePersonControls from "../utils/Controls";
 import getTexture from "../utils/Textures";
 import { useTexture } from "@react-three/drei"
 import { useFrame } from "@react-three/fiber";
-import { useState } from "react";
 
 
 const BOX_SIZE = 2
@@ -64,38 +63,6 @@ function Box(props) {
     )
 } 
 
-const MyCube = (props) => {
-  const box = useRef()
-  const [color, setColor] = useState('gray')
-  let timeout
 
-  // Limit to max positions
-  const maxPos = GRID_SIZE - BOX_SIZE
-  // Add position of map to box
-  var pos = ORIGIN_COORDS.map(function (num, i) {
-      return (num > maxPos ? maxPos : num) + (props.position !== undefined && props.position[i])
-  })
-
-  const [mesh] = useBox(() => ({
-      mass: 1,
-      args: [2, 2, 2],
-      position: [pos[0] - (GRID_SIZE - BOX_SIZE) / 2, pos[1], pos[2] - (GRID_SIZE - BOX_SIZE) / 2],
-      onCollide: () => {
-          setColor('red')
-          clearTimeout(timeout)
-          timeout = setTimeout(() => {
-              setColor('gray')
-          }, 1000)
-      }
-  }))
-
-  return (
-      <mesh castShadow ref={mesh}>
-          <boxBufferGeometry ref={box} args={[BOX_SIZE, BOX_SIZE, BOX_SIZE]} />
-          <meshStandardMaterial attach="material" color={color} />
-      </mesh>
-  )
-}
 
 export default Box;
-export { MyCube };

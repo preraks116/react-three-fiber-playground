@@ -1,8 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { useThree } from "@react-three/fiber";
+
+
+const GRID_SIZE = 20
     
-export const CameraController = () => {
+const CameraController = () => {
     const { camera, gl } = useThree();
     useEffect(
         () => {
@@ -17,3 +20,5 @@ export const CameraController = () => {
     );
     return null;
 };
+
+export { CameraController };
