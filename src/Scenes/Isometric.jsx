@@ -3,104 +3,13 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrthographicCamera, OrbitControls, Stars } from "@react-three/drei"
 import { Physics, useBox, usePlane } from '@react-three/cannon'
 import usePersonControls from "../utils/Controls";
+import Box from '../Components/Box'
 import * as THREE from 'three'
+import { MyCube } from '../Components/Box';
+import { Map } from '../Components/Plane';
 
-const BOX_SIZE = 2
+const BOX_SIZE = 2  
 const GRID_SIZE = 20
-const ORIGIN_COORDS = [0, 0, 0]
-
-const MyCube = (props) => {
-    const box = useRef()
-    const [color, setColor] = useState('gray')
-    let timeout
-
-    // Limit to max positions
-    const maxPos = GRID_SIZE - BOX_SIZE
-    // Add position of map to box
-    var pos = ORIGIN_COORDS.map(function (num, i) {
-        return (num > maxPos ? maxPos : num) + (props.position !== undefined && props.position[i])
-    })
-
-    const [mesh] = useBox(() => ({
-        mass: 1,
-        args: [2, 2, 2],
-        position: [pos[0] - (GRID_SIZE - BOX_SIZE) / 2, pos[1], pos[2] - (GRID_SIZE - BOX_SIZE) / 2],
-        onCollide: () => {
-            setColor('red')
-            clearTimeout(timeout)
-            timeout = setTimeout(() => {
-                setColor('gray')
-            }, 1000)
-        }
-    }))
-
-    return (
-        <mesh castShadow ref={mesh}>
-            <boxBufferGeometry ref={box} args={[BOX_SIZE, BOX_SIZE, BOX_SIZE]} />
-            <meshStandardMaterial attach="material" color={color} />
-        </mesh>
-    )
-}
-
-const MyMap = (props) => {
-    const [mesh] = usePlane(() => ({ mass: 0, rotation: [-Math.PI / 2, 0, -Math.PI / 2] }))
-    const [box, api] = useBox(() => ({
-        mass: 1,
-        args: [2, 2, 2],
-        position: [0, BOX_SIZE / 2, 0]
-    }))
-    const controls = usePersonControls();
-    const position = useRef([0, 0, 0]);
-    const speed = 0.05;
-
-    useEffect(() => {
-        const unsubscribe = api.position.subscribe((v) => (position.current = v))
-        return unsubscribe
-    }, [])
-
-    useFrame(() => {
-        if (controls.forward) {
-            // api.velocity.set(0, 0, -1); 
-            api.position.set(position.current[0], position.current[1], position.current[2] - speed);
-        }
-        if (controls.backward) {
-            // api.velocity.set(0, 0, 1);
-            api.position.set(position.current[0], position.current[1], position.current[2] + speed);
-        }
-        if (controls.left) {
-            // api.velocity.set(-1, 0, 0);
-            api.position.set(position.current[0] - speed, position.current[1], position.current[2]);
-        }
-        if (controls.right) {
-            // api.velocity.set(1, 0, 0);
-            api.position.set(position.current[0] + speed, position.current[1], position.current[2]);
-        }
-    })
-
-    const childrenWithProps = React.Children.map(props.children, (child) => {
-        // checking isValidElement is the safe way and avoids a typescript error too
-        if (React.isValidElement(child)) {
-            return React.cloneElement(child, { position: props.position })
-        }
-        return child
-    })
-
-    return (
-        <group>
-            <gridHelper position={props.position} args={[GRID_SIZE, GRID_SIZE]} />
-            <mesh castShadow ref={box}>
-                <boxBufferGeometry args={[BOX_SIZE, BOX_SIZE, BOX_SIZE]} />
-                <meshStandardMaterial attach="material" color="gray" />
-            </mesh>
-            <mesh receiveShadow ref={mesh} {...props}>
-                <planeBufferGeometry attach="geometry" args={[GRID_SIZE, GRID_SIZE]} />
-                <meshStandardMaterial attach="material" color="gray" />
-            </mesh>
-
-            {childrenWithProps}
-        </group>
-    )
-}
 
 const Controls = (props) => {
     return <OrbitControls {...props} />
@@ -169,12 +78,17 @@ export default function Isometric() {
                     intensity={1.5}
                 />
                 <Physics>
-                    <MyMap>
+                    <Map>
                         <group>
+                            <Box
+                                dimension={[BOX_SIZE, BOX_SIZE, BOX_SIZE]}
+                                position={[0, 1, 0]}
+                                type="person"
+                            />
                             <MyCube position={[0, 5, 0]} />
                             <MyCube position={[5, 10, 4]} />
                         </group>
-                    </MyMap>
+                    </Map>
                 </Physics>
             </Suspense>
             <Stars />
