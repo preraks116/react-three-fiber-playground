@@ -7,8 +7,8 @@ function App() {
   return (
     <>
       {/* <BowlingAlley /> */}
-      {/* <Playground /> */}
-      <Isometric />
+      <Playground />
+      {/* <Isometric /> */}
     </>
   );
 }

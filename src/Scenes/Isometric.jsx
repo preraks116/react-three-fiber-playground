@@ -2,6 +2,7 @@ import React, { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { useBox } from "@react-three/cannon"
 import { OrbitControls } from "@react-three/drei"
+import { TextureLoader } from 'three'
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import usePersonControls from "../utils/Controls";
 import { Physics } from '@react-three/cannon'
@@ -10,28 +11,55 @@ import Box from '../Components/Box'
 import { Map } from '../Components/Plane';
 import { useFrame } from "@react-three/fiber";
 import { OrthographicCamera } from "@react-three/drei"
+import { Vector3 } from 'three'
 
 const BOX_SIZE = 2  
 const GRID_SIZE = 20
 const ORIGIN_COORDS = [0, 0, 0]
 
+const cameraVector = new Vector3(11.547005383792516, -11.547005383792513, -11.547005383792515);
+// const cameraVector2 = new Vector3(0);
+let objectCoord = new Vector3(0, 0, 0);
+
 const Controls = (props) => {
     return <OrbitControls {...props} />
 }
 
-function CustomCamera(props) {
+function OrthogCamera(props) {
     const cameraRef = useRef()
     const set = useThree(({ set }) => set)
     const size = useThree(({ size }) => size)
     const aspect = size.width > size.height ? size.height / size.width : size.width / size.height
     const [zoom, setZoom] = useState(aspect * 50)
 
+    // const cameraPos = cameraRef.current.position
+    // const x = cameraPos.multiplyScalar(-1);
+
     useLayoutEffect(() => {
         if (cameraRef.current) {
+            // make a copy of the camera position
+            console.log("hi");
+            cameraVector.copy(cameraRef.current.position)   
+            console.log(cameraVector)
+            console.log(cameraRef.current.position)
+            // cameraVector2.set(cameraRef.current.position.multiplyScalar(-1))
+            // console.log(cameraVector2)
             cameraRef.current.aspect = size.width / size.height
             cameraRef.current.updateProjectionMatrix()
+            
+            let cameraPos = new Vector3(cameraRef.current.position)
+            cameraPos.addVectors(objectCoord, cameraVector)
+            // console.log(cameraPos)
+            // set the camera position 
         }
     }, [size, props])
+
+    useFrame(() => {
+        let cameraPos = new Vector3(cameraRef.current.position)
+        cameraPos.addVectors(objectCoord, cameraVector)
+        // console.log(cameraPos)
+    }
+    , [])
 
     useLayoutEffect(() => {
         set({ camera: cameraRef.current })
@@ -62,7 +90,18 @@ function CustomCamera(props) {
     )
 };
 
-const MyCube = (props) => {
+function Sprite(props) {
+
+    const loader = new TextureLoader();
+
+    const texture = loader.load(props.image);
+    return (
+        <sprite {...props}>
+            <spriteMaterial map={texture} />
+        </sprite>
+    )
+}
+const Cube = (props) => {
     const box = useRef()
     const [color, setColor] = useState('gray')
     let timeout;
@@ -70,6 +109,7 @@ const MyCube = (props) => {
     const position = useRef([0, 0, 0]);
     const controls = usePersonControls();
     const { camera } = useThree();
+
 
     const [ mesh, api ] = useBox(() => ({
         mass: 1,
@@ -85,7 +125,6 @@ const MyCube = (props) => {
     }))
 
     useLayoutEffect(() => {
-        console.log(camera.position.x)
         const unsubscribe = api.position.subscribe((v) => (position.current = v))
         return unsubscribe
     })
@@ -93,7 +132,10 @@ const MyCube = (props) => {
     useFrame(() => {
         // key controls
         // todo: calculating forward vector
+        // console.log(objectCoord)
+        // todo: add error handling to make sure the box is always at the centre of the screen
         if(props.type == "person") {
+            objectCoord = position.current
             if (controls.forward) {
             // api.velocity.set(0, 0, -1); 
             api.position.set(position.current[0], position.current[1], position.current[2] - speed);
@@ -128,13 +170,13 @@ const MyCube = (props) => {
             <meshStandardMaterial attach="material" color={color} />
         </mesh>
     )
-  }
+}
 
 export default function Isometric() {
     return (
         <Canvas resize={{ scroll: false }} >
             <Suspense fallback={null}>
-                <CustomCamera />
+                <OrthogCamera />
                 {/* <Controls enableDamping dampingFactor={0.2} /> */}
                 <hemisphereLight intensity={0.1} />
                 <directionalLight
@@ -152,12 +194,16 @@ export default function Isometric() {
                 <Physics>
                     <Map>
                         <group>
-                            <MyCube 
+                            <Sprite 
+                                position={[-5, 1, 5]} 
+                                image="src/Sprites/tree2.jpg"
+                            />
+                            <Cube 
                                 position={[0, 2, 0]} 
                                 type="person"
                             />
-                            <MyCube position={[4, 5, 0]} />
-                            <MyCube position={[5, 10, 4]} />
+                            <Cube position={[4, 5, 0]} />
+                            <Cube position={[5, 10, 4]} />
                         </group>
                     </Map>
                 </Physics>
