@@ -6,8 +6,8 @@ import Isometric from './Scenes/Isometric';
 function App() {
   return (
     <>
-      {/* <BowlingAlley /> */}
-      <Playground />
+      <BowlingAlley />
+      {/* <Playground /> */}
       {/* <Isometric /> */}
     </>
   );
